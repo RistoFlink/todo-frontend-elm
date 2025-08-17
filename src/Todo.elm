@@ -51,7 +51,7 @@ type alias PriorityStats =
 
 type alias CompletionStats = 
     { completed : Int
-    , incomple : Int
+    , incomplete : Int
     , completionTotal : Int
     }
 
@@ -77,6 +77,36 @@ todoDecoder =
         (Decode.field "dueDate" (Decode.nullable (Decode.map Time.millisToPosix Decode.int)))
         (Decode.field "priority" priorityDecoder)
 
+todoResponseDecoder : Decoder TodoResponse
+todoResponseDecoder =
+    Decode.map4 TodoResponse
+        (Decode.field "todos" (Decode.list todoDecoder))
+        (Decode.field "totalCount" Decode.int)
+        (Decode.field "limit" Decode.int)
+        (Decode.field "offset" Decode.int)
+
+priorityStatsDecoder : Decoder PriorityStats
+priorityStatsDecoder = 
+    Decode.map4 PriorityStats
+        (Decode.field "high" Decode.int)
+        (Decode.field "medium" Decode.int)
+        (Decode.field "low" Decode.int)
+        (Decode.field "priorityTotal" Decode.int)
+
+completionStatsDecoder : Decoder CompletionStats
+completionStatsDecoder =
+    Decode.map3 CompletionStats
+        (Decode.field "completed" Decode.int)
+        (Decode.field "incomplete" Decode.int)
+        (Decode.field "completionTotal" Decode.int)
+
+todoStatsDecoder : Decoder TodoStats
+todoStatsDecoder =
+    Decode.map4 TodoStats
+        (Decode.field "priorityStats" priorityStatsDecoder)
+        (Decode.field "completionStats" completionStatsDecoder)
+        (Decode.field "overdueCount" Decode.int)
+        (Decode.field "dueSoonCount" Decode.int)
 
 -- Helper functions
 priorityToString : Priority -> String
