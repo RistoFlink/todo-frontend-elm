@@ -31,7 +31,7 @@ type alias TodoResponse =
 type alias CreateTodoPayload =
     { title: String
     , completed: Maybe Bool
-    , duedate: Maybe Time.Posix
+    , dueDate: Maybe Time.Posix
     , priority : Maybe Priority
     }
 
@@ -107,6 +107,32 @@ todoStatsDecoder =
         (Decode.field "completionStats" completionStatsDecoder)
         (Decode.field "overdueCount" Decode.int)
         (Decode.field "dueSoonCount" Decode.int)
+
+-- JSON encoders
+priorityEncoder : Priority -> Encode.Value
+priorityEncoder priority =
+    Encode.string (priorityToString priority)
+
+createTodoPayloadEncoder : CreateTodoPayload -> Encode.Value
+createTodoPayloadEncoder payload =
+    Encode.object
+        [ ("title", Encode.string payload.title)
+        , ("completed",
+            case payload.completed of
+                Just completed -> Encode.bool completed
+                Nothing -> Encode.null
+        )
+        , ("dueDate",
+            case payload.dueDate of
+                Just date -> Encode.int (Time.posixToMillis date)
+                Nothing -> Encode.null
+        )
+        , ("priority",
+            case payload.priority of
+                Just priority -> priorityEncoder priority
+                Nothing -> Encode.null
+        )
+        ]
 
 -- Helper functions
 priorityToString : Priority -> String
