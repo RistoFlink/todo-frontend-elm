@@ -1,6 +1,7 @@
 module Api exposing (..)
 
 import Http
+import Json.Encode as Encode
 import Todo exposing (..)
 import Url.Builder as Url
 
@@ -78,6 +79,28 @@ updateTodo id payload toMsg =
         , timeout = Nothing
         , tracker = Nothing
         }
+
+updateTodoCompletion : Int -> Bool -> (Result Http.Error Todo -> msg) -> Cmd msg
+updateTodoCompletion id completed toMsg =
+    let
+        url =
+            Url.crossOrigin baseUrl [ "todos", String.fromInt id ] []
+        
+        -- Create a minimal payload that only updates completion status
+        payload =
+            Encode.object
+                [ ("completed", Encode.bool completed) ]
+    in
+    Http.request
+        { method = "PATCH"
+        , headers = []
+        , url = url
+        , body = Http.jsonBody payload
+        , expect = Http.expectJson toMsg todoDecoder
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
 
 deleteTodo : Int -> (Result Http.Error () -> msg) -> Cmd msg
 deleteTodo id toMsg =
