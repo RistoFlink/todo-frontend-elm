@@ -1,7 +1,6 @@
 module Api exposing (..)
 
 import Http
-import Json.Decode as Decode
 import Todo exposing (..)
 import Url.Builder as Url
 
@@ -39,6 +38,72 @@ getTodos params toMsg =
     Http.get
         { url = url
         , expect = Http.expectJson toMsg todoResponseDecoder
+        }
+
+getTodoById : Int -> (Result Http.Error Todo -> msg) -> Cmd msg
+getTodoById id toMsg = 
+    let
+        url =
+            Url.crossOrigin baseUrl [ "todos", String.fromInt id ] []
+    in
+    Http.get
+        { url = url
+        , expect = Http.expectJson toMsg todoDecoder
+        }
+
+createTodo : CreateTodoPayload -> (Result Http.Error Todo -> msg) -> Cmd msg
+createTodo payload toMsg =
+    let
+        url =
+            Url.crossOrigin baseUrl [ "todos" ] []
+    in
+    Http.post
+        { url = url
+        , body = Http.jsonBody (createTodoPayloadEncoder payload)
+        , expect = Http.expectJson toMsg todoDecoder
+        }
+
+updateTodo : Int -> CreateTodoPayload -> (Result Http.Error Todo -> msg) -> Cmd msg
+updateTodo id payload toMsg =
+    let
+        url =
+            Url.crossOrigin baseUrl [ "todos", String.fromInt id ] []
+    in
+    Http.request
+        { method = "PUT"
+        , headers = []
+        , url = url
+        , body = Http.jsonBody (createTodoPayloadEncoder payload)
+        , expect = Http.expectJson toMsg todoDecoder
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+deleteTodo : Int -> (Result Http.Error () -> msg) -> Cmd msg
+deleteTodo id toMsg =
+    let
+        url =
+            Url.crossOrigin baseUrl [ "todos", String.fromInt id ] []
+    in
+    Http.request
+        { method = "DELETE"
+        , headers = []
+        , url = url
+        , body = Http.emptyBody
+        , expect = Http.expectWhatever toMsg
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+getTodoStats : (Result Http.Error TodoStats -> msg) -> Cmd msg
+getTodoStats toMsg =
+    let
+        url =
+            Url.crossOrigin baseUrl [ "todos", "stats" ] []
+    in
+    Http.get
+        { url = url
+        , expect = Http.expectJson toMsg todoStatsDecoder
         }
 
 -- Helper functions
