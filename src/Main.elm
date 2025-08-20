@@ -135,9 +135,23 @@ update msg model =
             )
 
         ToggleTodoCompletion id completed ->
-            ( { model | loading = True }
-            , Api.updateTodoCompletion id completed TodoToggled
-            )
+            case List.filter (\todo -> todo.id == id) model.todos |> List.head of
+                Just currentTodo ->
+                    let
+                        payload = 
+                            { title = currentTodo.title
+                            , completed = Just completed
+                            , dueDate = currentTodo.dueDate
+                            , priority = Just currentTodo.priority
+                            }
+                        _ = Debug.log "Toggle payload" { id = id, completed = completed, payload = payload }
+                    in
+                    ( model
+                    , Api.updateTodo id payload TodoToggled
+                    )
+                
+                Nothing ->
+                    ( model, Cmd.none )
 
         TodoToggled (Ok updatedTodo) ->
             let
@@ -184,16 +198,18 @@ update msg model =
 -- View
 view : Model -> Html Msg
 view model =
-    div [ class "container" ]
-        [ header [ class "header" ]
-            [ h1 [] [ text "Todo App"]
+    div [ class "app-container" ]
+        [ div [ class "header" ]
+            [ h1 [ class "app-title" ] [ text "Todo App" ]
             , viewStats model.stats
             ]
-        , viewError model.error
-        , viewNewTodoForm model
-        , viewFilters model.filter
-        , viewTodoList model
-        , viewLoading model.loading
+        , div [ class "main-content" ]
+            [ viewError model.error
+            , viewNewTodoForm model
+            , viewFilters model.filter
+            , viewTodoList model
+            , viewLoading model.loading
+            ]
         ]
 
 viewStats : Maybe TodoStats -> Html Msg
@@ -201,20 +217,20 @@ viewStats maybeStats =
     case maybeStats of
         Nothing ->
             text ""
-    
+        
         Just stats ->
             div [ class "stats" ]
-                [ div [ class "stat-item" ]
-                    [ span [ class "stat-label" ] [ text "Total: " ]
-                    , span [ class "stat-value" ] [ text (String.fromInt stats.completionStats.completionTotal) ]
+                [ div [ class "stat" ]
+                    [ div [ class "stat-icon total" ] []
+                    , span [] [ text ("Total: " ++ String.fromInt stats.completionStats.completionTotal) ]
                     ]
-                , div [ class "stat-item" ]
-                    [ span [ class "stat-label" ] [ text "Completed: " ]
-                    , span [ class "stat-value" ] [ text (String.fromInt stats.completionStats.completed) ]
+                , div [ class "stat" ]
+                    [ div [ class "stat-icon completed" ] []
+                    , span [] [ text ("Completed: " ++ String.fromInt stats.completionStats.completed) ]
                     ]
-                , div [ class "stat-item" ]
-                    [ span [ class "stat-label" ] [ text "High Priority: " ]
-                    , span [ class "stat-value" ] [ text (String.fromInt stats.priorityStats.high) ]
+                , div [ class "stat" ]
+                    [ div [ class "stat-icon priority" ] []
+                    , span [] [ text ("High Priority: " ++ String.fromInt stats.priorityStats.high) ]
                     ]
                 ]
 
@@ -229,47 +245,53 @@ viewError maybeError =
 
 viewNewTodoForm : Model -> Html Msg
 viewNewTodoForm model =
-    div [ class "new-todo-form" ]
-        [ input
-            [ type_ "text"
-            , placeholder "What needs to be done?"
-            , value model.newTodoTitle
-            , onInput NewTodoTitleChanged
-            , onEnter CreateTodoClicked
-            , class "todo-input"
+    div [ class "add-todo-section" ]
+        [ div [ class "input-group" ]
+            [ input
+                [ type_ "text"
+                , placeholder "What needs to be done?"
+                , value model.newTodoTitle
+                , onInput NewTodoTitleChanged
+                , onEnter CreateTodoClicked
+                , class "todo-input"
+                ]
+                []
+            , select
+                [ onInput (NewTodoPriorityChanged << stringToPriority)
+                , class "priority-select"
+                ]
+                [ option [ value "None" ] [ text "No Priority" ]
+                , option [ value "Low" ] [ text "Low Priority" ]
+                , option [ value "Medium", selected True ] [ text "Medium Priority" ]
+                , option [ value "High" ] [ text "High Priority" ]
+                ]
+            , button
+                [ onClick CreateTodoClicked
+                , disabled (String.trim model.newTodoTitle == "")
+                , class "add-btn"
+                ]
+                [ text "Add Todo" ]
             ]
-            []
-        , select
-            [ onInput (NewTodoPriorityChanged << stringToPriority)
-            , class "priority-select"
-            ]
-            [ option [ value "High" ] [ text "High priority"]
-            , option [ value "Medium", selected True ] [ text "Medium priority" ]
-            , option [ value "Low" ] [ text "Low priority"]
-            ]
-        , button
-            [ onClick CreateTodoClicked
-            , disabled (String.trim model.newTodoTitle == "")
-            , class "add-button"
-            ]
-            [ text "Add Todo"]
         ]
 
 viewFilters : Filter -> Html Msg
 viewFilters currentFilter =
-        div [ class "filters" ]
+    div [ class "filters" ]
         [ button
             [ onClick (FilterChanged All)
+            , class "filter-btn"
             , classList [ ( "active", currentFilter == All ) ]
             ]
             [ text "All" ]
         , button
             [ onClick (FilterChanged Incomplete)
+            , class "filter-btn"
             , classList [ ( "active", currentFilter == Incomplete ) ]
             ]
             [ text "Active" ]
         , button
             [ onClick (FilterChanged Completed)
+            , class "filter-btn"
             , classList [ ( "active", currentFilter == Completed ) ]
             ]
             [ text "Completed" ]
@@ -280,28 +302,34 @@ viewTodoList model =
     let
         filteredTodos =
             filterTodos model.filter model.todos
-    
     in
-    ul [ class "todo-list" ]
-        (List.map viewTodoItem filteredTodos)
+    if List.isEmpty filteredTodos then
+        div [ class "empty-state" ]
+            [ div [ class "empty-icon" ] [ text "📝" ]
+            , div [ class "empty-title" ] [ text "No todos yet" ]
+            , div [ class "empty-description" ] [ text "Add a task above to get started!" ]
+            ]
+    else
+        ul [ class "todo-list" ]  -- Changed from div to ul
+            (List.map viewTodoItem filteredTodos)
 
 viewTodoItem : Todo -> Html Msg
 viewTodoItem todo =
-        li [ class "todo-item", classList [ ( "completed", todo.completed ) ] ]
-        [ input
-            [ type_ "checkbox"
-            , checked todo.completed
-            , onCheck (ToggleTodoCompletion todo.id)
+    li [ class ("todo-item " ++ priorityToColor todo.priority)
+        , classList [ ( "completed", todo.completed ) ]
+        ]
+        [ div 
+            [ class "todo-checkbox"
+            , classList [ ( "checked", todo.completed ) ]
+            , onClick (ToggleTodoCompletion todo.id (not todo.completed))
             ]
-            []
-        , span [ class "todo-title" ] [ text todo.title ]
-        , span [ class ("priority-badge " ++ priorityToColor todo.priority) ]
+            [ if todo.completed then text "✓" else text "" ]
+        , div [ class "todo-text"
+            , classList [ ( "completed", todo.completed ) ]
+            ] 
+            [ text todo.title ]
+        , div [ class ("priority-badge " ++ priorityToColor todo.priority) ]
             [ text (priorityToString todo.priority) ]
-        , button
-            [ onClick (DeleteTodoClicked todo.id)
-            , class "delete-button"
-            ]
-            [ text "×" ]
         ]
 
 viewLoading : Bool -> Html Msg
@@ -361,9 +389,9 @@ stringToPriority str =
 priorityToColor : Priority -> String
 priorityToColor priority =
     case priority of
-        High -> "high"
-        Medium -> "medium"
-        Low -> "low"
+        High -> "priority-high"
+        Medium -> "priority-medium"
+        Low -> "priority-low"
 
 onEnter : Msg -> Attribute Msg
 onEnter msg =

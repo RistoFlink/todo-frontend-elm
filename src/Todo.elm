@@ -116,7 +116,7 @@ priorityEncoder priority =
 createTodoPayloadEncoder : CreateTodoPayload -> Encode.Value
 createTodoPayloadEncoder payload =
     Encode.object
-        [ ("title", Encode.string payload.title)
+        [ ("createTitle", Encode.string payload.title)
         , ("completed",
             case payload.completed of
                 Just completed -> Encode.bool completed

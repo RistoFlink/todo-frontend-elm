@@ -92,7 +92,7 @@ updateTodoCompletion id completed toMsg =
                 [ ("completed", Encode.bool completed) ]
     in
     Http.request
-        { method = "PATCH"
+        { method = "PUT"
         , headers = []
         , url = url
         , body = Http.jsonBody payload
