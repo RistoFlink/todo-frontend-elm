@@ -1,19 +1,19 @@
-FROM node:18-alpine AS builder
-
-RUN npm install -g elm
+FROM elmlang/elm:0.19.1-node as builder
 
 WORKDIR /app
 
-COPY . .
-RUN elm make src/Main.elm --output=public/elm.js
+COPY elm.json ./
+COPY src ./src/
+COPY public ./public/
 
+RUN elm make src/Main.elm --output=public/elm.js
 
 FROM nginx:1.27-alpine
 
 RUN apk add --no-cache gettext
 
-COPY --from=builder /app/public/ /usr/share/nginx/html/
-
 COPY nginx.conf.template /etc/nginx/
+
+COPY --from=builder /app/public /usr/share/nginx/html
 
 CMD ["/bin/sh", "-c", "envsubst < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf && nginx -g 'daemon off;'"]
