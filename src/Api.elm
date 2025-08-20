@@ -7,8 +7,8 @@ import Url.Builder as Url
 
 -- Config
 baseUrl : String
-baseUrl =
-    "http://localhost:8080"
+baseUrl = 
+    "http://todo-api-haskell.railway.internal:8080"
 
 -- Endpoints
 getTodos :
