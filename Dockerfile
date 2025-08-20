@@ -1,4 +1,6 @@
-FROM elmlang/elm:0.19.1 as builder
+FROM node:18-alpine as builder
+
+RUN npm install -g elm
 
 WORKDIR /app
 
