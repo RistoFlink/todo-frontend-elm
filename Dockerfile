@@ -9,8 +9,8 @@ WORKDIR /app
 COPY elm.json ./
 COPY src/ ./src/
 
-# Build Elm app
-RUN elm make src/Main.elm --output=public/elm.js --optimize
+# Build Elm app to root directory first
+RUN elm make src/Main.elm --output=elm.js --optimize
 
 # Copy static files
 COPY public/ ./public/
@@ -19,7 +19,10 @@ COPY index.html ./
 # Production server
 FROM nginx:alpine
 
-# Copy all static files including the built Elm
+# Copy the built Elm JS file
+COPY --from=builder /app/elm.js /usr/share/nginx/html/
+
+# Copy static files
 COPY --from=builder /app/public/ /usr/share/nginx/html/
 COPY --from=builder /app/index.html /usr/share/nginx/html/
 
