@@ -1,4 +1,4 @@
-FROM elmlang/elm:0.19.1-node as builder
+FROM elmlang/elm:0.19.1 as builder
 
 WORKDIR /app
 
