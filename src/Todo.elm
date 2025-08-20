@@ -32,7 +32,7 @@ type alias CreateTodoPayload =
     { title: String
     , completed: Maybe Bool
     , dueDate: Maybe Time.Posix
-    , priority : Maybe Priority
+    , priority : Priority
     }
 
 type alias TodoStats =
@@ -127,11 +127,7 @@ createTodoPayloadEncoder payload =
                 Just date -> Encode.int (Time.posixToMillis date)
                 Nothing -> Encode.null
         )
-        , ("priority",
-            case payload.priority of
-                Just priority -> priorityEncoder priority
-                Nothing -> Encode.null
-        )
+        , ("priority", priorityEncoder payload.priority)
         ]
 
 -- Helper functions

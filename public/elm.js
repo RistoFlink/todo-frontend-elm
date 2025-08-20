@@ -6479,15 +6479,7 @@ var $author$project$Todo$createTodoPayloadEncoder = function (payload) {
 				}()),
 				_Utils_Tuple2(
 				'priority',
-				function () {
-					var _v2 = payload.priority;
-					if (_v2.$ === 'Just') {
-						var priority = _v2.a;
-						return $author$project$Todo$priorityEncoder(priority);
-					} else {
-						return $elm$json$Json$Encode$null;
-					}
-				}())
+				$author$project$Todo$priorityEncoder(payload.priority))
 			]));
 };
 var $elm$http$Http$jsonBody = function (value) {
@@ -6676,7 +6668,7 @@ var $author$project$Main$update = F2(
 					var payload = {
 						completed: $elm$core$Maybe$Just(false),
 						dueDate: $elm$core$Maybe$Nothing,
-						priority: $elm$core$Maybe$Just(model.newTodoPriority),
+						priority: model.newTodoPriority,
 						title: trimmedTitle
 					};
 					return _Utils_Tuple2(
@@ -6727,7 +6719,7 @@ var $author$project$Main$update = F2(
 					var payload = {
 						completed: $elm$core$Maybe$Just(completed),
 						dueDate: currentTodo.dueDate,
-						priority: $elm$core$Maybe$Just(currentTodo.priority),
+						priority: currentTodo.priority,
 						title: currentTodo.title
 					};
 					var _v2 = A2(
@@ -7072,16 +7064,6 @@ var $author$project$Main$viewNewTodoForm = function (model) {
 								$elm$html$Html$option,
 								_List_fromArray(
 									[
-										$elm$html$Html$Attributes$value('None')
-									]),
-								_List_fromArray(
-									[
-										$elm$html$Html$text('No Priority')
-									])),
-								A2(
-								$elm$html$Html$option,
-								_List_fromArray(
-									[
 										$elm$html$Html$Attributes$value('Low')
 									]),
 								_List_fromArray(
@@ -7256,6 +7238,9 @@ var $elm$core$List$isEmpty = function (xs) {
 	}
 };
 var $elm$html$Html$ul = _VirtualDom_node('ul');
+var $author$project$Main$DeleteTodoClicked = function (a) {
+	return {$: 'DeleteTodoClicked', a: a};
+};
 var $author$project$Main$ToggleTodoCompletion = F2(
 	function (a, b) {
 		return {$: 'ToggleTodoCompletion', a: a, b: b};
@@ -7271,6 +7256,19 @@ var $author$project$Main$priorityToColor = function (priority) {
 			return 'priority-low';
 	}
 };
+var $author$project$Main$priorityToIcon = function (priority) {
+	switch (priority.$) {
+		case 'High':
+			return '🔥';
+		case 'Medium':
+			return '⚡';
+		default:
+			return '📌';
+	}
+};
+var $elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
+var $elm$html$Html$Attributes$style = $elm$virtual_dom$VirtualDom$style;
+var $elm$html$Html$Attributes$title = $elm$html$Html$Attributes$stringProperty('title');
 var $author$project$Main$viewTodoItem = function (todo) {
 	return A2(
 		$elm$html$Html$li,
@@ -7297,7 +7295,9 @@ var $author$project$Main$viewTodoItem = function (todo) {
 								_Utils_Tuple2('checked', todo.completed)
 							])),
 						$elm$html$Html$Events$onClick(
-						A2($author$project$Main$ToggleTodoCompletion, todo.id, !todo.completed))
+						A2($author$project$Main$ToggleTodoCompletion, todo.id, !todo.completed)),
+						A2($elm$html$Html$Attributes$style, 'cursor', 'pointer'),
+						$elm$html$Html$Attributes$title('Click to toggle completion for: ' + todo.title)
 					]),
 				_List_fromArray(
 					[
@@ -7327,14 +7327,47 @@ var $author$project$Main$viewTodoItem = function (todo) {
 					]),
 				_List_fromArray(
 					[
+						A2(
+						$elm$html$Html$span,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$class('priority-icon')
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text(
+								$author$project$Main$priorityToIcon(todo.priority))
+							])),
 						$elm$html$Html$text(
 						$author$project$Todo$priorityToString(todo.priority))
+					])),
+				A2(
+				$elm$html$Html$button,
+				_List_fromArray(
+					[
+						$elm$html$Html$Attributes$class('delete-btn'),
+						$elm$html$Html$Events$onClick(
+						$author$project$Main$DeleteTodoClicked(todo.id)),
+						$elm$html$Html$Attributes$title('Delete: ' + todo.title)
+					]),
+				_List_fromArray(
+					[
+						$elm$html$Html$text('×')
 					]))
 			]));
 };
 var $author$project$Main$viewTodoList = function (model) {
 	var filteredTodos = A2($author$project$Main$filterTodos, model.filter, model.todos);
-	return $elm$core$List$isEmpty(filteredTodos) ? A2(
+	return (model.loading && $elm$core$List$isEmpty(model.todos)) ? A2(
+		$elm$html$Html$div,
+		_List_fromArray(
+			[
+				$elm$html$Html$Attributes$class('loading')
+			]),
+		_List_fromArray(
+			[
+				$elm$html$Html$text('Loading todos...')
+			])) : ($elm$core$List$isEmpty(filteredTodos) ? A2(
 		$elm$html$Html$div,
 		_List_fromArray(
 			[
@@ -7378,7 +7411,7 @@ var $author$project$Main$viewTodoList = function (model) {
 			[
 				$elm$html$Html$Attributes$class('todo-list')
 			]),
-		A2($elm$core$List$map, $author$project$Main$viewTodoItem, filteredTodos));
+		A2($elm$core$List$map, $author$project$Main$viewTodoItem, filteredTodos)));
 };
 var $author$project$Main$view = function (model) {
 	return A2(

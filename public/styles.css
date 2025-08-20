@@ -75,6 +75,29 @@ body {
 .main-content {
     padding: 32px;
     min-height: 400px;
+    opacity: 0;
+    animation: fadeIn 0.8s ease-in 0.2s forwards;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.empty-state {
+    animation: slideIn 0.6s ease-out 0.3s forwards;
+    opacity: 0;
+}
+
+@keyframes slideIn {
+    from { 
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to { 
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .add-todo-section {
@@ -203,13 +226,27 @@ body {
     top: 0;
     bottom: 0;
     width: 4px;
-    transition: all 0.3s ease;
 }
 
-.todo-item.priority-high::before { background: #ef4444; }
-.todo-item.priority-medium::before { background: #f97316; }
-.todo-item.priority-low::before { background: #eab308; }
-.todo-item.priority-none::before { background: #6b7280; }
+.todo-item.priority-high::before { 
+    background: #dc2626; /* Red */
+}
+
+.todo-item.priority-medium::before { 
+    background: #2563eb; /* Blue */
+}
+
+.todo-item.priority-low::before { 
+    background: #7c3aed; /* Purple - distinct from green */
+}
+
+.todo-item.priority-none::before { 
+    background: #9ca3af; /* Gray */
+}
+
+.todo-item.completed::before {
+    background: #22c55e !important; /* Green only for completed */
+}
 
 .todo-item:hover {
     transform: translateY(-2px);
@@ -314,6 +351,47 @@ body {
     color: #6b7280;
     font-style: italic;
     min-height: 20px;
+}
+
+.delete-btn {
+    background: none;
+    border: none;
+    color: #dc2626;
+    font-size: 1.5rem;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.6;
+    flex-shrink: 0;
+}
+
+.delete-btn:hover {
+    background: #fee2e2;
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.delete-btn:active {
+    transform: scale(0.95);
+}
+
+/* Hide delete button by default, show on hover */
+.todo-item .delete-btn {
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.todo-item:hover .delete-btn {
+    opacity: 0.6;
+}
+
+.todo-item:hover .delete-btn:hover {
+    opacity: 1;
 }
 
 @media (max-width: 768px) {

@@ -113,7 +113,7 @@ update msg model =
                         { title = trimmedTitle
                         , completed = Just False
                         , dueDate = Nothing
-                        , priority = Just model.newTodoPriority
+                        , priority = model.newTodoPriority
                         }
                 in
                 ( { model | loading = True }
@@ -142,7 +142,7 @@ update msg model =
                             { title = currentTodo.title
                             , completed = Just completed
                             , dueDate = currentTodo.dueDate
-                            , priority = Just currentTodo.priority
+                            , priority = currentTodo.priority
                             }
                         _ = Debug.log "Toggle payload" { id = id, completed = completed, payload = payload }
                     in
@@ -260,8 +260,7 @@ viewNewTodoForm model =
                 [ onInput (NewTodoPriorityChanged << stringToPriority)
                 , class "priority-select"
                 ]
-                [ option [ value "None" ] [ text "No Priority" ]
-                , option [ value "Low" ] [ text "Low Priority" ]
+                [ option [ value "Low" ] [ text "Low Priority" ]
                 , option [ value "Medium", selected True ] [ text "Medium Priority" ]
                 , option [ value "High" ] [ text "High Priority" ]
                 ]
@@ -300,37 +299,55 @@ viewFilters currentFilter =
 viewTodoList : Model -> Html Msg
 viewTodoList model =
     let
-        filteredTodos =
-            filterTodos model.filter model.todos
+        filteredTodos = filterTodos model.filter model.todos
     in
-    if List.isEmpty filteredTodos then
+    if model.loading && List.isEmpty model.todos then
+        div [ class "loading" ] [ text "Loading todos..." ]
+    else if List.isEmpty filteredTodos then
         div [ class "empty-state" ]
             [ div [ class "empty-icon" ] [ text "📝" ]
             , div [ class "empty-title" ] [ text "No todos yet" ]
             , div [ class "empty-description" ] [ text "Add a task above to get started!" ]
             ]
     else
-        ul [ class "todo-list" ]  -- Changed from div to ul
+        ul [ class "todo-list" ]
             (List.map viewTodoItem filteredTodos)
 
 viewTodoItem : Todo -> Html Msg
 viewTodoItem todo =
     li [ class ("todo-item " ++ priorityToColor todo.priority)
-        , classList [ ( "completed", todo.completed ) ]
+        , classList [ ("completed", todo.completed) ]
         ]
         [ div 
             [ class "todo-checkbox"
-            , classList [ ( "checked", todo.completed ) ]
+            , classList [ ("checked", todo.completed) ]
             , onClick (ToggleTodoCompletion todo.id (not todo.completed))
+            , style "cursor" "pointer"
+            , title ("Click to toggle completion for: " ++ todo.title)
             ]
             [ if todo.completed then text "✓" else text "" ]
         , div [ class "todo-text"
-            , classList [ ( "completed", todo.completed ) ]
+            , classList [ ("completed", todo.completed) ]
             ] 
             [ text todo.title ]
         , div [ class ("priority-badge " ++ priorityToColor todo.priority) ]
-            [ text (priorityToString todo.priority) ]
+            [ span [ class "priority-icon" ] [ text (priorityToIcon todo.priority) ]
+            , text (priorityToString todo.priority)
+            ]
+        , button
+            [ class "delete-btn"
+            , onClick (DeleteTodoClicked todo.id)
+            , title ("Delete: " ++ todo.title)
+            ]
+            [ text "×" ]
         ]
+
+priorityToIcon : Priority -> String
+priorityToIcon priority =
+    case priority of
+        High -> "🔥"
+        Medium -> "⚡"
+        Low -> "📌"
 
 viewLoading : Bool -> Html Msg
 viewLoading loading =
